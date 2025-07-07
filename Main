@@ -1,0 +1,43 @@
+# Scrapping a pizza website.
+# https://pizza-site-six.vercel.app/recipes
+
+
+import requests
+from bs4 import BeautifulSoup
+
+URL_ENDPOINT = "https://pizza-site-six.vercel.app"
+
+res = requests.get(URL_ENDPOINT+"/recipes")
+#print(res)
+soup = BeautifulSoup(res.text)
+anchors_list = (soup.find_all("a", attrs={"class": "inline-block mt-4 px-4 py-2 bg-[#d32f2f] text-white rounded-lg hover:bg-[#b71c1c] transition-colors duration-300"}))
+
+recipes = {}
+
+
+for anchor in anchors_list:
+    res = requests.get(URL_ENDPOINT+anchor["href"])
+    soup = BeautifulSoup(res.text)
+    recipe_title = (soup.find("h1").text)
+    #print(recipe_title)
+    #print(soup.img["src"])
+    price_per_serving_elem = soup.find("div", class_="text-2xl font-bold text-[#d32f2f] mb-2")
+    price_per_serving = price_per_serving_elem.text.strip() if price_per_serving_elem else "N/A"
+
+    ing_headers = soup.find_all("h2", attrs={"class": "text-3xl font-bold text-[#4e342e] mb-6 flex items-center"})
+    ingredients = ing_headers.next_sibling.find_all("span", attrs={"class": "text-[#4e342e] font_medium"})
+    #print(ingredients)
+
+    recipe_ingredients = []
+    for ingredient in ingredients:
+        recipe_ingredients.append(ingredient.text)
+
+    recipes[anchor["href"]] = {
+        "title": recipe_title,
+        "ingredients": recipe_ingredients,
+        "img": soup.img["src"]
+    }
+
+
+with open("test.html", "w", encoding= "utf-8") as f:
+    f.write(res.text)
